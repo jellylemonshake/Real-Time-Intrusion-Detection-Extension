@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Intrusion Detection Dashboard",
+  "version": "1.0",
+  "description": "Simulated IDS based on browsing history",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": [
+    "history",
+    "storage",
+    "alarms",
+    "usb"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+   {
+     "matches": ["<all_urls>"],
+     "js": ["content-check.js"],
+     "run_at": "document_start"
+   }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["blacklist.json"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}
