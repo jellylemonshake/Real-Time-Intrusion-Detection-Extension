@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IDS Dashboard</title>
+  <style>
+    body {
+      background: #f3f6fa;
+      color: #222;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-width: 480px;
+    }
+
+    .container {
+      max-width: 540px;
+      margin: 28px auto;
+      background: #fff;
+      padding: 22px 22px 16px 22px;
+      border-radius: 12px;
+      border: 1px solid #e1e4e8;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1a3a4a;
+      font-size: 1.5em;
+      margin-bottom: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .shield-icon {
+      font-size: 1em;
+      vertical-align: middle;
+      margin-right: 7px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-box {
+      flex: 1;
+      padding: 10px 0;
+      border-radius: 6px;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+      font-size: 1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.16s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;
+      box-shadow: 0 1px 6px 0 #e1e4e822;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+    }
+    .stat-box .dot {
+      margin-right: 7px;
+    }
+    .low { background: #27ae60; }
+    .medium { background: #f1c40f; color: #222; }
+    .high { background: #e74c3c; }
+
+    .dot {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-right: 7px;
+      vertical-align: middle;
+      box-shadow: 0 0 2px #2222;
+    }
+    .dot-low { background: #00ff99; }
+    .dot-medium { background: #ffe066; border: 1.5px solid #e1b000;}
+    .dot-high { background: #ff3b30; border: 1.5px solid #b71c1c;}
+
+    /* Hover effect for stat-boxes */
+    .stat-box:hover,
+    .stat-box.active {
+      transform: scale(1.07);
+      box-shadow: 0 3px 16px 0 #e1e4e855;
+      z-index: 2;
+    }
+
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    #riskChart {
+      background: transparent;
+      display: block;
+      margin: 0 auto;
+      z-index: 0;
+    }
+    .chart-label {
+      margin-top: -120px;
+      margin-bottom: 100px;
+      color: #1a3a4a;
+      font-size: 1em;
+      font-weight: 600;
+      background: #fff;
+      padding: 2px 10px;
+      border-radius: 6px;
+      border: 1px solid #e1e4e8;
+      text-align: center;
+      min-width: 90px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* SVG segment highlight */
+    .risk-segment {
+      transition: stroke-width 0.24s cubic-bezier(.4,2,.6,1), filter 0.18s;
+      cursor: pointer;
+      filter: none;
+    }
+    .risk-segment.active,
+    .risk-segment:hover {
+      stroke-width: 40 !important;
+      filter: drop-shadow(0 0 8px #8885);
+      z-index: 2;
+    }
+
+    .action-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 8px 22px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 100px;
+      justify-content: center;
+      box-shadow: 0 1px 6px 0 #e1e4e822;
+    }
+    #analyze.action-btn {
+      background: #1a3a4a;
+      color: #fff;
+    }
+    #analyze.action-btn:hover:not(:disabled) {
+      background: #274e6a;
+      color: #fff;
+    }
+    #downloadExcelBtn.action-btn {
+      background: #f1c40f;
+      color: #1a3a4a;
+    }
+    #downloadExcelBtn.action-btn:hover:not(:disabled) {
+      background: #ffdd57;
+      color: #1a3a4a;
+    }
+    #simulateUsbBtn.action-btn {
+      background: #e67e22;
+      color: #fff;
+    }
+    #simulateUsbBtn.action-btn:hover:not(:disabled) {
+      background: #cf711f;
+      color: #fff;
+    }
+    .action-btn:disabled {
+      opacity: 0.60;
+      cursor: not-allowed;
+    }
+    .btn-icon {
+      font-size: 1.1em;
+      margin-right: 2px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f5f5f5;
+      padding: 5px 10px 3px 10px;
+      border-radius: 6px;
+      border: 1px solid #e1e4e8;
+    }
+
+    .sort-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    select {
+      padding: 2px 7px;
+      border-radius: 5px;
+      border: 1px solid #cfd8dc;
+      background: #fff;
+      color: #1a3a4a;
+      font-weight: 600;
+      font-size: 1em;
+      outline: none;
+    }
+    select:focus {
+      border: 1.5px solid #1a3a4a;
+    }
+
+    .logs {
+      max-height: 180px;
+      overflow-y: auto;
+      border-top: 1px solid #e1e4e8;
+      padding-top: 8px;
+      margin-top: 8px;
+      background: #fff;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .logs h2 {
+      color: #1a3a4a;
+      font-size: 1em;
+      margin: 0 0 6px 0;
+      font-weight: 700;
+      text-align: left;
+      letter-spacing: 0.2px;
+    }
+
+    .logs ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .logs li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      margin-bottom: 1px;
+      border-radius: 4px;
+      font-size: 0.97em;
+      background: #f8f8f8;
+      border-left: 4px solid transparent;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      transition: background 0.2s, color 0.2s;
+      cursor: pointer;
+      min-height: 22px;
+    }
+
+    .log-ok .log-message {
+      color: #009944 !important;
+      font-weight: 600;
+    }
+    .log-risk .log-message {
+      color: #d32f2f !important;
+      font-weight: 600;
+    }
+    .log-ok {
+      border-left: 4px solid #00ff99;
+      background: #eafaf1;
+    }
+    .log-risk {
+      border-left: 4px solid #e74c3c;
+      background: #fff0f0;
+    }
+
+    .log-time {
+      font-size: 0.89em;
+      color: #888;
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    .logs li:hover {
+      background: #ededed;
+      color: inherit;
+    }
+    .custom-keywords-section {
+      background: #f8f8f8;
+      border-radius: 6px;
+      border: 1px solid #e1e4e8;
+      padding: 10px 10px 6px 10px;
+      margin-bottom: 14px;
+    }
+    .custom-keyword-chip {
+      display: inline-block;
+      background: #e1e4e8;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-right: 8px;
+      margin-bottom: 2px;
+      font-size: 0.97em;
+    }
+    .custom-keyword-remove {
+      color: #e74c3c;
+      margin-left: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      background: #f5f5f5;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #e1e4e8;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <span class="shield-icon"></span>
+      Intrusion Detection
+    </h1>
+
+    <div class="stats">
+      <div class="stat-box low" data-risk="Low">
+        <span class="dot dot-low"></span>
+        Low Risk: <span id="lowCount">0</span>
+      </div>
+      <div class="stat-box medium" data-risk="Medium">
+        <span class="dot dot-medium"></span>
+        Medium Risk: <span id="mediumCount">0</span>
+      </div>
+      <div class="stat-box high" data-risk="High">
+        <span class="dot dot-high"></span>
+        High Risk: <span id="highCount">0</span>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <svg id="riskChart" width="180" height="180" viewBox="0 0 180 180">
+        <circle
+          cx="90" cy="90" r="70"
+          fill="none" stroke="#e1e4e8" stroke-width="30"
+        />
+      </svg>
+      <div class="chart-label">Risk Overview</div>
+    </div>
+
+    <div class="custom-keywords-section">
+      <label for="customKeywordInput"><b>Add Suspicious Keyword:</b></label>
+      <input id="customKeywordInput" type="text" placeholder="Enter keyword..." style="margin:0 6px 0 8px;">
+      <button id="addKeywordBtn">Add</button>
+      <div id="customKeywordsList" style="margin-top: 6px; font-size:0.95em;"></div>
+    </div>
+
+   <div style="margin-bottom:14px; text-align:center;">
+      <label for="alertModeToggle" style="font-weight:600;">
+      <input type="checkbox" id="alertModeToggle" style="vertical-align:middle; margin-right:7px;">
+        Show <b>non-dismissable alert</b> for flagged pages
+      </label>
+   </div>
+
+    <div class="action-row">
+      <button id="analyze" class="action-btn">Analyze</button>
+      <button id="downloadExcelBtn" class="action-btn">Download Logs</button>
+      <button id="simulateUsbBtn" class="action-btn">Simulate USB Insert</button>
+      <div class="controls">
+        <div class="sort-filter-group">
+          <label for="sortSelect">Sort:</label>
+          <select id="sortSelect">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="severity">By Severity</option>
+          </select>
+        </div>
+        <div class="sort-filter-group">
+          <label for="filterSelect">Filter:</label>
+          <select id="filterSelect">
+            <option value="all">All</option>
+            <option value="high">High Risk</option>
+            <option value="medium">Medium Risk</option>
+            <option value="low">Low Risk</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="logs" class="logs">
+      <h2>Event Logs</h2>
+      <ul id="logList"></ul>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
